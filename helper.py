@@ -1,7 +1,9 @@
-def toHex(s):
+from functools import reduce
+
+def toHex(chunk):
     lst = []
-    for ch in s:
-        hv = hex(ord(ch)).replace('0x', '')
+    for ch in chunk:
+        hv = hex(ch).replace('0x', '')
         if len(hv) == 1:
             hv = '0'+hv
         lst.append(hv)
@@ -10,4 +12,4 @@ def toHex(s):
 def printNum(chunk): 
     for i in range(0,28):
         print(toHex(chunk[28*i:28*(i+1)]))
-    print('')
+    print()

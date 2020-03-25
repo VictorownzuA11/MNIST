@@ -1,5 +1,8 @@
 # vscode
 .vscode/
 
+#python files
+.pyc
+
 # zipped files
 zip/
