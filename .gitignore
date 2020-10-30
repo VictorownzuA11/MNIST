@@ -1,8 +1,16 @@
-# vscode
+# VSCode files
 .vscode/
 
-#python files
-.pyc
+# Python tmp files
+__pycache__
+*.swp
 
-# zipped files
-zip/
+# Logs
+logs/
+
+# MNIST Data
+MNIST/
+MNIST_GAN/
+
+# Model Sources
+models/
