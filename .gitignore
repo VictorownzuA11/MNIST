@@ -5,9 +5,6 @@
 __pycache__
 *.swp
 
-# Logs
-logs/
-
 # MNIST Data
 MNIST/
 MNIST_GAN/

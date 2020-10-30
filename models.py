@@ -166,7 +166,7 @@ class CNNModel(nn.Module):
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
 
         # Fully connected 1 (readout)
-        self.fc1 = nn.Linear(32 * 4 * 4, 10) 
+        self.fc1 = nn.Linear(32 * 4 * 4, 10)
 
     def forward(self, x):
         # Convolution 1
@@ -200,9 +200,9 @@ class CNNModel(nn.Module):
 # ██      ██      ██  ██ ██ ██         ██    
 # ███████ ███████ ██   ████ ███████    ██   
 
-class lenet(nn.Module):
+class LENETModel(nn.Module):
     def __init__(self):
-        super(lenet, self).__init__()
+        super(LENETModel, self).__init__()
 
         self.conv1 = nn.Conv2d(1, 6, 3, padding=(2,2))
         self.conv2 = nn.Conv2d(6, 16, 3)
@@ -237,6 +237,75 @@ class lenet(nn.Module):
 # ██      ██   ██ ██  ██ ██ ██  ██ ██ 
 #  ██████ ██   ██ ██   ████ ██   ████
 
+class CRNNModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+        super(CRNNModel, self).__init__()
+
+        # Convolution 1
+        self.cnn1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=0)
+        self.relu1 = nn.ReLU()
+
+        # Max pool 1
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+
+        # Convolution 2
+        self.cnn2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=5, stride=1, padding=0)
+        self.relu2 = nn.ReLU()
+
+        # Max pool 2
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+
+         # Hidden dimensions
+        self.hidden_dim = hidden_dim
+
+        # Number of hidden layers
+        self.layer_dim = layer_dim
+
+        # Building your LSTM
+        # batch_first=True causes input/output tensors to be of shape
+        # (batch_dim, seq_dim, feature_dim)
+        self.lstm = nn.LSTM(32*4*4, hidden_dim, layer_dim, batch_first=True)
+
+        # Readout layer
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        # Convolution 1
+        out = self.cnn1(x)
+        out = self.relu1(out)
+
+        # Max pool 1
+        out = self.maxpool1(out)
+
+        # Convolution 2 
+        out = self.cnn2(out)
+        out = self.relu2(out)
+
+        # Max pool 2 
+        out = self.maxpool2(out)
+
+        # Resize
+        # Original size: (100, 32, 4, 4)
+        print(out.size())
+        # out.size(0): 100
+        # New out size: (10, 10, 32*4*4)
+        out = out.view(10, 10, -1)
+        print(out.size())
+
+        h0 = torch.zeros(self.layer_dim, out.size(0), self.hidden_dim).requires_grad_().to(device)
+
+        # Initialize cell state
+        c0 = torch.zeros(self.layer_dim, out.size(0), self.hidden_dim).requires_grad_().to(device)
+
+        # One time step
+        out, (hn, cn) = self.lstm(out, (h0.detach(), c0.detach()))
+
+        # Index hidden state of last time step
+        # out.size() --> 100, 28, 100
+        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states! 
+        out = self.fc(out[:, -1, :]) 
+        # out.size() --> 100, 10
+        return out
 
 
 # ███████ ███████ ██████        ██    ██  ██████  

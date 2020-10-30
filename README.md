@@ -1,5 +1,5 @@
 # MNIST
-This is a implementation of LeNet in pytorch
+Testing various Neural Networks on MNIST
 
 ## Dataset
 The MNIST Dataset is provided from: http://yann.lecun.com/exdb/mnist/
