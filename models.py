@@ -57,6 +57,7 @@ class LSTMModel(nn.Module):
 # ██           ██    ██    ██  ██  ██     ██      ██      ██      ██      
 # ███████ ███████    ██    ██      ██      ██████ ███████ ███████ ███████
 
+# FIXME: Not working
 class LSTMCellModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
         super(LSTMCellModel, self).__init__()
