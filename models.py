@@ -32,10 +32,10 @@ class LSTMModel(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
+        # NOTE: Scaling the imput allows it to train much faster
+        #x *= 255
+
         # Initialize hidden state with zeros
-        #######################
-        #  USE GPU FOR MODEL  #
-        #######################
         h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
@@ -79,9 +79,6 @@ class LSTMCellModel(nn.Module):
 
     def forward(self, x):
         # Initialize hidden state with zeros
-        #######################
-        #  USE GPU FOR MODEL  #
-        #######################
         hx = torch.zeros(x.size(0), self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
@@ -125,9 +122,6 @@ class RNNModel(nn.Module):
 
     def forward(self, x):
         # Initialize hidden state with zeros
-        #######################
-        #  USE GPU FOR MODEL  #
-        #######################
         h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(device)
 
         # One time step
@@ -185,9 +179,6 @@ class CNNModel(nn.Module):
         out = self.maxpool2(out)
 
         # Resize
-        # Original size: (100, 32, 7, 7)
-        # out.size(0): 100
-        # New out size: (100, 32*7*7)
         out = out.view(out.size(0), -1)
 
         # Linear function (readout)

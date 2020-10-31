@@ -1,6 +1,9 @@
 # Python Libraries
 from time import process_time as ptime
+import time
 import argparse
+import cv2
+import numpy as np
 
 # PyTorch
 import torch
@@ -12,6 +15,9 @@ from torchsummary import summary as netsummary
 # Networks
 from models import *
 
+# Datasets
+from datasets import *
+
 if __name__ == "__main__":
     # Parse the input arguments of main.py
     parser = argparse.ArgumentParser(description='ESP-VO Model implemented in PyTorch')
@@ -19,23 +25,23 @@ if __name__ == "__main__":
     # General arguments
     parser.add_argument('--model', default="lstm", type=str, help='Chooses the model to be run')
     parser.add_argument('--batch_size', default=100, type=int, help='Number of images per batch')
-    parser.add_argument('--epochs', default=10, type=int, help='Number of epochs to train on')
+    parser.add_argument('--epochs', default=5, type=int, help='Number of epochs to train on')
     parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='Learning rate (default: 0.1)')
 
     parser.add_argument('--summary', default=1, type=int, help='Print a summary of the model used')
     parser.add_argument('--device', default=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"), \
         type=str, help='Device to run PyTorch with')
 
-    #parser.add_argument('--progress', default=1, type=int, help='Shows progress bar for training')
+    parser.add_argument('--display', default=0, type=int, help='Displays the MNIST batch images')
     parser.add_argument('--manual_seed', default=1, type=int, help='Set the manual seed for deterministic \
         results')
 
     args = parser.parse_args()
 
+
     '''
     STEP 0: INITIALIZATION
     '''
-    
     # Display meta data about the argparse parameters
     print("\n==========================================================================================")
     print("Args".center(90))
@@ -46,9 +52,7 @@ if __name__ == "__main__":
     
     print("==========================================================================================\n")
 
-    # FIXME: Set the random seed for consistant results while testing
     if args.manual_seed:
-        # https://discuss.pytorch.org/t/how-to-get-deterministic-behavior/18177/11
         seed = 999
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
@@ -57,35 +61,7 @@ if __name__ == "__main__":
 
 
     '''
-    STEP 1: LOADING DATASET
-    '''
-    train_dataset = dsets.MNIST(root='./', 
-                                train=True, 
-                                transform=transforms.ToTensor(),
-                                download=True)
-
-    test_dataset = dsets.MNIST(root='./', 
-                            train=False, 
-                            transform=transforms.ToTensor())
-
-
-    '''
-    STEP 2: MAKING DATASET ITERABLE
-    '''
-    batch_size = args.batch_size
-    num_epochs = args.epochs
-
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset, 
-                                            batch_size=batch_size, 
-                                            shuffle=True)
-
-    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, 
-                                            batch_size=batch_size, 
-                                            shuffle=False)
-
-
-    '''
-    STEP 3: INSTANTIATE MODEL CLASS
+    STEP 1: INSTANTIATE MODEL CLASS
     '''
     input_dim = 28
     hidden_dim = 100
@@ -94,9 +70,13 @@ if __name__ == "__main__":
 
     # Number of steps to unroll
     seq_dim = 28
+    seq_len = 10
+    use_seq = 1
 
     modelname = args.model
     learning_rate = args.lr
+    batch_size = args.batch_size
+    num_epochs = args.epochs
 
     print("\n==========================================================================================")
     print(f"Loading model {modelname}".center(90))
@@ -107,22 +87,24 @@ if __name__ == "__main__":
             # (100 x 28 x 28)
             # (batch_size, seq_dim, input_dim)
         model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
-        use_seq = 1
+    elif (modelname == "lstm2"):
+        input_dim =  784
+        batch_size = 100
+        seq_dim = 10
+        model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "lstmcell"):
+        print("Warning, lstmcell is broken!")
         model = LSTMCellModel(input_dim, hidden_dim, layer_dim, output_dim)
-        use_seq = 1
     elif (modelname == "rnn"):
         model = RNNModel(input_dim, hidden_dim, layer_dim, output_dim)
-        use_seq = 1
     elif (modelname == "cnn"):
+        use_seq = 0
         model = CNNModel()
-        use_seq = 0
     elif (modelname == "lenet"):
-        model = LENETModel(input_dim, hidden_dim, layer_dim, output_dim)
         use_seq = 0
+        model = LENETModel()
     elif (modelname == "crnn"):
         model = CRNNModel(input_dim, hidden_dim, layer_dim, output_dim)
-        use_seq = 0
     else:
         exit("Invalid Model")
 
@@ -132,7 +114,59 @@ if __name__ == "__main__":
     # Print a Summary of the model
     if args.summary:
         # FIXME: Not working for CNN or LENET
-        netsummary(model, (28, 28), device="cuda")
+        netsummary(model, (seq_dim, input_dim), device="cuda")
+
+
+    '''
+    STEP 2: LOADING DATASET
+    '''
+    if (input_dim == 784):
+        # Count of Images in Training
+            # 0: 5923
+            # 1: 6742
+            # 2: 5958
+            # 3: 6131
+            # 4: 5842
+            # 5: 5421
+            # 6: 5918
+            # 7: 6265
+            # 8: 5851
+            # 9: 5949
+        train_dataset = torch.utils.data.ConcatDataset([MNISTDataset2(train=True, seq=seq_dim, \
+            images=image, display=0) for image in range(10)])
+
+        # Count of Images in Test
+            # 0: 980
+            # 1: 1135
+            # 2: 1032
+            # 3: 1010
+            # 4: 982
+            # 5: 892
+            # 6: 958
+            # 7: 1028
+            # 8: 974
+            # 9: 1009
+        test_dataset = MNISTDataset2(train=False, seq=seq_dim)
+    else:
+        train_dataset = MNISTDataset(train=True)
+        test_dataset = MNISTDataset(train=False)
+
+
+    '''
+    STEP 3: MAKING DATASET ITERABLE
+    '''
+    # Set the CUDA params
+    kwargs = {'num_workers': 1, 'pin_memory': True} if torch.cuda.is_available() else {}
+
+    train_loader = torch.utils.data.DataLoader(dataset=train_dataset, 
+                                            batch_size=batch_size, 
+                                            shuffle=True,
+                                            **kwargs)
+
+    test_loader = torch.utils.data.DataLoader(dataset=test_dataset, 
+                                            batch_size=batch_size, 
+                                            shuffle=False,
+                                            **kwargs)
 
 
     '''
@@ -150,16 +184,27 @@ if __name__ == "__main__":
     '''
     STEP 6: TRAIN THE MODEL
     '''
-    iter = 0
     for epoch in range(num_epochs):
-        for i, (images, labels) in enumerate(train_loader):
+        for batch, (images, labels) in enumerate(train_loader):
+            # Display the batch
+            if args.display:
+                # Generate the output of all images in the batch
+                if input_dim == 784:
+                    imgview = np.concatenate([np.concatenate([image.view(28, 28, 1) for image in image_batch], axis= 1) \
+                        for image_batch in images], axis=0)
+                else:
+                    imgview = np.concatenate([image.view(seq_dim, input_dim, 1) for image in images], axis=1)
+                
+                # Display the image for 1ms
+                cv2.imshow("Batch", imgview)
+                cv2.waitKey(1)
+
             # Load images as Variable
-            # (batch_size, seq_dim, input_dim)
             if use_seq:
-                # (100 x 28 x 28)
+                # (batch_size, seq_dim, input_dim)
                 images = images.view(-1, seq_dim, input_dim).requires_grad_().to(device)
             else:
-                # (100 x 1 x 28 x 28)
+                # (batch_size, 1, seq_dim, input_dim)
                 images = images.requires_grad_().to(device)
 
             labels = labels.to(device)
@@ -180,9 +225,8 @@ if __name__ == "__main__":
             # Updating parameters
             optimizer.step()
 
-            iter += 1
-
-            if iter % 500 == 0:
+            # Test the model halfway, and at the end of the batch
+            if (batch+1) % (len(train_loader)//2) == 0:
                 # Calculate Accuracy
                 correct = 0
                 total = 0
@@ -213,4 +257,4 @@ if __name__ == "__main__":
                 accuracy = 100 * correct // total
 
                 # Print Loss
-                print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
+                print(f"Epoch: {epoch+1}. Batch: {batch+1}. Loss: {loss.item()}. Accuracy: {accuracy}.")
