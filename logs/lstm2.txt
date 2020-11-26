@@ -1,7 +1,7 @@
 ==========================================================================================
                                            Args
 ==========================================================================================
-model: lstm
+model: lstm2
 batch_size: 100
 epochs: 5
 lr: 0.1
@@ -15,12 +15,13 @@ manual_seed: 1
 
 
 ==========================================================================================
-                                    Loading model lstm
+                                   Loading model lstm2
 ==========================================================================================
+Warning, lstm2 does not converge
 ==========================================================================================
 Layer (type:depth-idx)                   Output Shape              Param #
 ==========================================================================================
-├─LSTM: 1-1                              [-1, 28, 100]             213,600
+├─LSTM: 1-1                              [-1, 56, 100]             213,600
 ├─Linear: 1-2                            [-1, 10]                  1,010
 ==========================================================================================
 Total params: 214,610
@@ -28,18 +29,18 @@ Trainable params: 214,610
 Non-trainable params: 0
 Total mult-adds (M): 0.21
 ==========================================================================================
-Input size (MB): 0.00
-Forward/backward pass size (MB): 0.02
+Input size (MB): 0.01
+Forward/backward pass size (MB): 0.04
 Params size (MB): 0.82
-Estimated Total Size (MB): 0.84
+Estimated Total Size (MB): 0.87
 ==========================================================================================
-Epoch: 1. Batch: 300. Loss: 1.598973035812378. Accuracy: 40.
-Epoch: 1. Batch: 600. Loss: 0.6810948848724365. Accuracy: 76.
-Epoch: 2. Batch: 300. Loss: 0.5069841146469116. Accuracy: 84.
-Epoch: 2. Batch: 600. Loss: 0.31675300002098083. Accuracy: 89.
-Epoch: 3. Batch: 300. Loss: 0.16761618852615356. Accuracy: 93.
-Epoch: 3. Batch: 600. Loss: 0.20104698836803436. Accuracy: 94.
-Epoch: 4. Batch: 300. Loss: 0.09052759408950806. Accuracy: 95.
-Epoch: 4. Batch: 600. Loss: 0.1806066483259201. Accuracy: 95.
-Epoch: 5. Batch: 300. Loss: 0.11594358086585999. Accuracy: 96.
-Epoch: 5. Batch: 600. Loss: 0.15066662430763245. Accuracy: 95.
+Epoch: 1. Batch: 150. Loss: 2.2358288764953613. Accuracy: 20.
+Epoch: 1. Batch: 300. Loss: 1.5234681367874146. Accuracy: 25.
+Epoch: 2. Batch: 150. Loss: 1.1408790349960327. Accuracy: 37.
+Epoch: 2. Batch: 300. Loss: 0.6748689413070679. Accuracy: 42.
+Epoch: 3. Batch: 150. Loss: 0.6094717979431152. Accuracy: 45.
+Epoch: 3. Batch: 300. Loss: 0.35313713550567627. Accuracy: 47.
+Epoch: 4. Batch: 150. Loss: 0.4138479232788086. Accuracy: 49.
+Epoch: 4. Batch: 300. Loss: 0.4573611915111542. Accuracy: 45.
+Epoch: 5. Batch: 150. Loss: 0.26985570788383484. Accuracy: 48.
+Epoch: 5. Batch: 300. Loss: 0.18708458542823792. Accuracy: 50.

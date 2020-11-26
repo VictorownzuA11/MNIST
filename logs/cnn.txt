@@ -3,10 +3,13 @@
 ==========================================================================================
 model: cnn
 batch_size: 100
-epochs: 10
+epochs: 5
 lr: 0.1
-summary: 0
+seq_len: 2
+summary: 1
 device: cuda:0
+display: 0
+wait: 0
 manual_seed: 1
 ==========================================================================================
 
@@ -14,15 +17,14 @@ manual_seed: 1
 ==========================================================================================
                                     Loading model cnn
 ==========================================================================================
-Iteration: 500. Loss: 0.06467363983392715. Accuracy: 97
-Iteration: 1000. Loss: 0.12354244291782379. Accuracy: 98
-Iteration: 1500. Loss: 0.03212543576955795. Accuracy: 98
-Iteration: 2000. Loss: 0.03643110394477844. Accuracy: 98
-Iteration: 2500. Loss: 0.020423317328095436. Accuracy: 98
-Iteration: 3000. Loss: 0.0580146461725235. Accuracy: 98
-Iteration: 3500. Loss: 0.01593122072517872. Accuracy: 98
-Iteration: 4000. Loss: 0.017095711082220078. Accuracy: 98
-Iteration: 4500. Loss: 0.008116364479064941. Accuracy: 98
-Iteration: 5000. Loss: 0.06736365705728531. Accuracy: 98
-Iteration: 5500. Loss: 0.014343935996294022. Accuracy: 98
-Iteration: 6000. Loss: 0.005391201935708523. Accuracy: 98
+Summary is brokem with cnn
+Epoch: 1. Batch: 300. Loss: 0.17554742097854614. Accuracy: 95.
+Epoch: 1. Batch: 600. Loss: 0.2202989012002945. Accuracy: 97.
+Epoch: 2. Batch: 300. Loss: 0.06418585032224655. Accuracy: 97.
+Epoch: 2. Batch: 600. Loss: 0.059803999960422516. Accuracy: 98.
+Epoch: 3. Batch: 300. Loss: 0.12904132902622223. Accuracy: 98.
+Epoch: 3. Batch: 600. Loss: 0.1057211309671402. Accuracy: 98.
+Epoch: 4. Batch: 300. Loss: 0.05235578864812851. Accuracy: 98.
+Epoch: 4. Batch: 600. Loss: 0.08164582401514053. Accuracy: 98.
+Epoch: 5. Batch: 300. Loss: 0.023743968456983566. Accuracy: 98.
+Epoch: 5. Batch: 600. Loss: 0.029172783717513084. Accuracy: 98.

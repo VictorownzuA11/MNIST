@@ -33,22 +33,25 @@ class LSTMModel(nn.Module):
 
     def forward(self, x):
         # NOTE: Scaling the imput allows it to train much faster
-        #x *= 255
+        x *= 255
+
+        # Get dimensions of input
+        batch_size = x.size(0)
 
         # Initialize hidden state with zeros
-        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        h0 = torch.zeros(self.layer_dim, batch_size, self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
-        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_().to(device)
+        c0 = torch.zeros(self.layer_dim, batch_size, self.hidden_dim).requires_grad_().to(device)
 
         # One time step
-        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
+        out, (_, _) = self.lstm(x, (h0.detach(), c0.detach()))
 
         # Index hidden state of last time step
-        # out.size() --> 100, 28, 100
-        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states! 
-        out = self.fc(out[:, -1, :]) 
-        # out.size() --> 100, 10
+        # out.size() --> batch_size, seq_dim, hidden_size
+        # out[:, -1, :] --> batch_size, hidden_size --> just want last time step hidden states!
+        out = self.fc(out[:, -1, :])
+        # out.size() --> batch_size, output_size
         return out
 
 # ██      ███████ ████████ ███    ███      ██████ ███████ ██      ██      
@@ -57,7 +60,6 @@ class LSTMModel(nn.Module):
 # ██           ██    ██    ██  ██  ██     ██      ██      ██      ██      
 # ███████ ███████    ██    ██      ██      ██████ ███████ ███████ ███████
 
-# FIXME: Not working
 class LSTMCellModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
         super(LSTMCellModel, self).__init__()
@@ -70,31 +72,38 @@ class LSTMCellModel(nn.Module):
         # Building your LSTM
         # batch_first=True causes input/output tensors to be of shape
         # (batch_dim, seq_dim, feature_dim)
-        self.lstmcell = []
-        for _ in range(self.layer_dim):
-            self.lstmcell.append(nn.LSTMCell(input_dim, hidden_dim))
+        self.lstmcell1 = nn.LSTMCell(input_dim, hidden_dim)
+        self.lstmcell2 = nn.LSTMCell(input_dim, hidden_dim)
 
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
+        # NOTE: Scaling the imput allows it to train much faster
+        x *= 255
+
+        # Get dimensions of input
+        batch_size = x.size(0)
+        seq_dim = x.size(1)
+
         # Initialize hidden state with zeros
-        hx = torch.zeros(x.size(0), self.hidden_dim).requires_grad_().to(device)
+        hx = torch.zeros(seq_dim, self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
-        cx = torch.zeros(x.size(0), self.hidden_dim).requires_grad_().to(device)
+        cx = torch.zeros(seq_dim, self.hidden_dim).requires_grad_().to(device)
 
         # One time step
-        out = []
-        for i in range(self.layer_dim):
-            hx, cx = self.lstmcell[i](x[i], (hx.detach(), cx.detach()))
-            out.append(hx)
+        out = torch.zeros([batch_size, seq_dim, self.hidden_dim]).requires_grad_().to(device)
+        for i in range(batch_size):
+            hx, cx = self.lstmcell1(x[i], (hx.detach(), cx.detach()))
+            hx, cx = self.lstmcell2(x[i], (hx.detach(), cx.detach()))
+            out[i] = hx
 
         # Index hidden state of last time step
-        # out.size() --> 100, 28, 100
-        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states! 
-        out = self.fc(out[:, -1, :]) 
-        # out.size() --> 100, 10
+        # out.size() --> batch_size, seq_dim, hidden_size
+        # out[:, -1, :] --> batch_size, hidden_size --> just want last time step hidden states!
+        out = self.fc(out[:, -1, :])
+        # out.size() --> batch_size, output_size
         return out
 
 # ██████  ███    ██ ███    ██ 

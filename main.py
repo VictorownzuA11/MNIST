@@ -27,12 +27,14 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', default=100, type=int, help='Number of images per batch')
     parser.add_argument('--epochs', default=5, type=int, help='Number of epochs to train on')
     parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='Learning rate (default: 0.1)')
+    parser.add_argument('--seq_len', default=2, type=int, help='Length of the sequence of images used')
 
     parser.add_argument('--summary', default=1, type=int, help='Print a summary of the model used')
     parser.add_argument('--device', default=torch.device("cuda:0" if torch.cuda.is_available() else "cpu"), \
         type=str, help='Device to run PyTorch with')
 
-    parser.add_argument('--display', default=0, type=int, help='Displays the MNIST batch images')
+    parser.add_argument('--display', default=1, type=int, help='Displays the MNIST batch images')
+    parser.add_argument('--wait', default=0, type=int, help='Waits after each image')
     parser.add_argument('--manual_seed', default=1, type=int, help='Set the manual seed for deterministic \
         results')
 
@@ -67,16 +69,23 @@ if __name__ == "__main__":
     hidden_dim = 100
     layer_dim = 3
     output_dim = 10
+    img_dim_x = 28
+    img_dim_y = 28
 
     # Number of steps to unroll
     seq_dim = 28
-    seq_len = 10
+    seq_len = 1
     use_seq = 1
 
     modelname = args.model
     learning_rate = args.lr
     batch_size = args.batch_size
     num_epochs = args.epochs
+    
+    if args.wait:
+        wait_time = 0
+    else:
+        wait_time = 1
 
     print("\n==========================================================================================")
     print(f"Loading model {modelname}".center(90))
@@ -88,20 +97,25 @@ if __name__ == "__main__":
             # (batch_size, seq_dim, input_dim)
         model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "lstm2"):
-        input_dim =  784
-        batch_size = 100
-        seq_dim = 10
+        seq_len = args.seq_len
+        seq_dim *= seq_len
+        print("Warning, lstm2 does not converge")
+        # When running the test batch the images are shuffles within the sequence, which causes the fails.
         model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "lstmcell"):
-        print("Warning, lstmcell is broken!")
+        print("Warning, lstmcell does not converge")
         model = LSTMCellModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "rnn"):
         model = RNNModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "cnn"):
         use_seq = 0
+        args.summary = 0
+        print(f"Summary is brokem with {modelname}")
         model = CNNModel()
     elif (modelname == "lenet"):
         use_seq = 0
+        args.summary = 0
+        print(f"Summary is brokem with {modelname}")
         model = LENETModel()
     elif (modelname == "crnn"):
         model = CRNNModel(input_dim, hidden_dim, layer_dim, output_dim)
@@ -120,36 +134,32 @@ if __name__ == "__main__":
     '''
     STEP 2: LOADING DATASET
     '''
-    if (input_dim == 784):
-        # Count of Images in Training
-            # 0: 5923
-            # 1: 6742
-            # 2: 5958
-            # 3: 6131
-            # 4: 5842
-            # 5: 5421
-            # 6: 5918
-            # 7: 6265
-            # 8: 5851
-            # 9: 5949
-        train_dataset = torch.utils.data.ConcatDataset([MNISTDataset2(train=True, seq=seq_dim, \
-            images=image, display=0) for image in range(10)])
+    # Count of Images in Training
+        # 0: 5923
+        # 1: 6742
+        # 2: 5958
+        # 3: 6131
+        # 4: 5842
+        # 5: 5421
+        # 6: 5918
+        # 7: 6265
+        # 8: 5851
+        # 9: 5949
+    train_dataset = torch.utils.data.ConcatDataset([MNISTDataset(train=True, seq_len=seq_len, \
+        img_class=image, display=0) for image in range(10)])
 
-        # Count of Images in Test
-            # 0: 980
-            # 1: 1135
-            # 2: 1032
-            # 3: 1010
-            # 4: 982
-            # 5: 892
-            # 6: 958
-            # 7: 1028
-            # 8: 974
-            # 9: 1009
-        test_dataset = MNISTDataset2(train=False, seq=seq_dim)
-    else:
-        train_dataset = MNISTDataset(train=True)
-        test_dataset = MNISTDataset(train=False)
+    # Count of Images in Test
+        # 0: 980
+        # 1: 1135
+        # 2: 1032
+        # 3: 1010
+        # 4: 982
+        # 5: 892
+        # 6: 958
+        # 7: 1028
+        # 8: 974
+        # 9: 1009
+    test_dataset = MNISTDataset(train=False, seq_len=seq_len)
 
 
     '''
@@ -164,9 +174,9 @@ if __name__ == "__main__":
                                             **kwargs)
 
     test_loader = torch.utils.data.DataLoader(dataset=test_dataset, 
-                                            batch_size=batch_size, 
-                                            shuffle=False,
-                                            **kwargs)
+                                        batch_size=batch_size, 
+                                        shuffle=False,
+                                        **kwargs)
 
 
     '''
@@ -189,25 +199,25 @@ if __name__ == "__main__":
             # Display the batch
             if args.display:
                 # Generate the output of all images in the batch
-                if input_dim == 784:
-                    imgview = np.concatenate([np.concatenate([image.view(28, 28, 1) for image in image_batch], axis= 1) \
-                        for image_batch in images], axis=0)
+                if seq_len > 1:
+                    imgview = np.concatenate([np.concatenate([image.view(img_dim_x, img_dim_y, 1) for image in image_batch], axis= 1) for image_batch in images], axis=0)
                 else:
-                    imgview = np.concatenate([image.view(seq_dim, input_dim, 1) for image in images], axis=1)
+                    imgview = np.concatenate([image.view(img_dim_x, img_dim_y, 1) for image in images], axis=1)
                 
                 # Display the image for 1ms
-                cv2.imshow("Batch", imgview)
-                cv2.waitKey(1)
+                cv2.imshow("Train Batch", imgview)
+                cv2.waitKey(wait_time)
 
             # Load images as Variable
             if use_seq:
                 # (batch_size, seq_dim, input_dim)
-                images = images.view(-1, seq_dim, input_dim).requires_grad_().to(device)
+                images = images.view(-1, img_dim_x, img_dim_y).requires_grad_().to(device)
             else:
                 # (batch_size, 1, seq_dim, input_dim)
                 images = images.requires_grad_().to(device)
 
-            labels = labels.to(device)
+            # Reformat the labels from [batch_size, seq_len] to batch_size*seq_len]
+            labels = labels.view(-1).to(device)
 
             # Clear gradients w.r.t. parameters
             optimizer.zero_grad()
@@ -232,12 +242,26 @@ if __name__ == "__main__":
                 total = 0
                 # Iterate through test dataset
                 for images, labels in test_loader:
+                    # Display the batch
+                    if args.display:
+                        # Generate the output of all images in the batch
+                        if seq_len > 1:
+                            imgview = np.concatenate([np.concatenate([image.view(img_dim_x, img_dim_y, 1) for image in image_batch], axis= 1) for image_batch in images], axis=0)
+                        else:
+                            imgview = np.concatenate([image.view(img_dim_x, img_dim_y, 1) for image in images], axis=1)
+                        
+                        # Display the image for 1ms
+                        cv2.imshow("Test Batch", imgview)
+                        cv2.waitKey(wait_time)
+
+                    # Format the images to the model input parameters
                     if use_seq:
-                        images = images.view(-1, seq_dim, input_dim).to(device)
+                        images = images.view(-1, img_dim_x, img_dim_y).to(device)
                     else:
                         images = images.to(device)
                     
-                    labels = labels.to(device)
+                    # Reformat the labels from [batch_size, seq_len] to batch_size*seq_len]
+                    labels = labels.view(-1).to(device)
 
                     # Forward pass only to get logits/output
                     outputs = model(images)
