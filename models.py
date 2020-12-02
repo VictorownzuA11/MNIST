@@ -299,7 +299,7 @@ class CRNNModel(nn.Module):
         c0 = torch.zeros(self.layer_dim, out.size(0), self.hidden_dim).requires_grad_().to(device)
 
         # One time step
-        out, (hn, cn) = self.lstm(out, (h0.detach(), c0.detach()))
+        out, (_, _) = self.lstm(out, (h0.detach(), c0.detach()))
 
         # Index hidden state of last time step
         # out.size() --> 100, 28, 100

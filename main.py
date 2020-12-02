@@ -99,8 +99,6 @@ if __name__ == "__main__":
     elif (modelname == "lstm2"):
         seq_len = args.seq_len
         seq_dim *= seq_len
-        print("Warning, lstm2 does not converge")
-        # When running the test batch the images are shuffles within the sequence, which causes the fails.
         model = LSTMModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "lstmcell"):
         print("Warning, lstmcell does not converge")
@@ -109,15 +107,13 @@ if __name__ == "__main__":
         model = RNNModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "cnn"):
         use_seq = 0
-        args.summary = 0
-        print(f"Summary is brokem with {modelname}")
         model = CNNModel()
     elif (modelname == "lenet"):
         use_seq = 0
-        args.summary = 0
-        print(f"Summary is brokem with {modelname}")
         model = LENETModel()
     elif (modelname == "crnn"):
+        seq_len = args.seq_len
+        use_seq = 0
         model = CRNNModel(input_dim, hidden_dim, layer_dim, output_dim)
     else:
         exit("Invalid Model")
@@ -127,8 +123,10 @@ if __name__ == "__main__":
 
     # Print a Summary of the model
     if args.summary:
-        # FIXME: Not working for CNN or LENET
-        netsummary(model, (seq_dim, input_dim), device="cuda")
+        if use_seq:
+            netsummary(model, (seq_dim, input_dim), device="cuda")
+        else:
+            netsummary(model, (1, seq_dim, input_dim), device="cuda")
 
 
     '''
@@ -159,7 +157,11 @@ if __name__ == "__main__":
         # 7: 1028
         # 8: 974
         # 9: 1009
-    test_dataset = MNISTDataset(train=False, seq_len=seq_len)
+    if seq_len > 1:
+        test_dataset = torch.utils.data.ConcatDataset([MNISTDataset(train=False, seq_len=seq_len, \
+            img_class=image, display=0) for image in range(10)])
+    else:
+        test_dataset = MNISTDataset(train=False, seq_len=seq_len)
 
 
     '''

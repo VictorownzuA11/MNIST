@@ -10,6 +10,11 @@ import torch
 import torch.utils.data
 import torchvision.transforms as transforms
 
+# ███    ███ ███    ██ ██ ███████ ████████ 
+# ████  ████ ████   ██ ██ ██         ██    
+# ██ ████ ██ ██ ██  ██ ██ ███████    ██    
+# ██  ██  ██ ██  ██ ██ ██      ██    ██    
+# ██      ██ ██   ████ ██ ███████    ██  
 
 class MNISTDataset(torch.utils.data.Dataset):
     """`MNIST <http://yann.lecun.com/exdb/mnist/>`_ Dataset.
@@ -77,6 +82,12 @@ class MNISTDataset(torch.utils.data.Dataset):
         else:
             return (len(self.data) - self.seq_len) // self.seq_len
 
+
+# ██   ██ ██ ████████ ████████ ██ 
+# ██  ██  ██    ██       ██    ██ 
+# █████   ██    ██       ██    ██ 
+# ██  ██  ██    ██       ██    ██ 
+# ██   ██ ██    ██       ██    ██ 
 
 class KITTIDataset(torch.utils.data.Dataset):
     def __init__(self, seq="00", seq_len=1, display=1, longdataset=0):
@@ -151,6 +162,8 @@ class KITTIDataset(torch.utils.data.Dataset):
 
 
 if __name__ == "__main__":
-    test_dataset = KITTIDataset(display=1, seq_len=10)
+    test_dataset = KITTIDataset(display=1, seq_len=100)
 
     img, label = test_dataset.__getitem__(0)
+
+    print(label)

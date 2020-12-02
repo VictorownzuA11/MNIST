@@ -8,7 +8,7 @@ lr: 0.1
 seq_len: 2
 summary: 1
 device: cuda:0
-display: 0
+display: 1
 wait: 0
 manual_seed: 1
 ==========================================================================================
@@ -34,13 +34,13 @@ Forward/backward pass size (MB): 0.04
 Params size (MB): 0.82
 Estimated Total Size (MB): 0.87
 ==========================================================================================
-Epoch: 1. Batch: 150. Loss: 2.2358288764953613. Accuracy: 20.
-Epoch: 1. Batch: 300. Loss: 1.5234681367874146. Accuracy: 25.
-Epoch: 2. Batch: 150. Loss: 1.1408790349960327. Accuracy: 37.
-Epoch: 2. Batch: 300. Loss: 0.6748689413070679. Accuracy: 42.
-Epoch: 3. Batch: 150. Loss: 0.6094717979431152. Accuracy: 45.
-Epoch: 3. Batch: 300. Loss: 0.35313713550567627. Accuracy: 47.
-Epoch: 4. Batch: 150. Loss: 0.4138479232788086. Accuracy: 49.
-Epoch: 4. Batch: 300. Loss: 0.4573611915111542. Accuracy: 45.
-Epoch: 5. Batch: 150. Loss: 0.26985570788383484. Accuracy: 48.
-Epoch: 5. Batch: 300. Loss: 0.18708458542823792. Accuracy: 50.
+Epoch: 1. Batch: 150. Loss: 2.2358288764953613. Accuracy: 32.
+Epoch: 1. Batch: 300. Loss: 1.5234681367874146. Accuracy: 42.
+Epoch: 2. Batch: 150. Loss: 1.1408790349960327. Accuracy: 67.
+Epoch: 2. Batch: 300. Loss: 0.6748689413070679. Accuracy: 76.
+Epoch: 3. Batch: 150. Loss: 0.6094717979431152. Accuracy: 83.
+Epoch: 3. Batch: 300. Loss: 0.35313713550567627. Accuracy: 86.
+Epoch: 4. Batch: 150. Loss: 0.4138479232788086. Accuracy: 90.
+Epoch: 4. Batch: 300. Loss: 0.4573611915111542. Accuracy: 81.
+Epoch: 5. Batch: 150. Loss: 0.26985570788383484. Accuracy: 89.
+Epoch: 5. Batch: 300. Loss: 0.18708458542823792. Accuracy: 93.
