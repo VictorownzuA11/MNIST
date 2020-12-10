@@ -115,6 +115,8 @@ if __name__ == "__main__":
         seq_len = args.seq_len
         use_seq = 0
         model = CRNNModel(input_dim, hidden_dim, layer_dim, output_dim)
+    #elif (modelname == "gan"):
+        #model = GANModel()
     else:
         exit("Invalid Model")
 

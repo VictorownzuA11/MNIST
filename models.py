@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
-import torchvision.datasets as dsets
 import torch.nn.functional as F
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -53,6 +51,7 @@ class LSTMModel(nn.Module):
         out = self.fc(out[:, -1, :])
         # out.size() --> batch_size, output_size
         return out
+
 
 # ██      ███████ ████████ ███    ███      ██████ ███████ ██      ██      
 # ██      ██         ██    ████  ████     ██      ██      ██      ██      
@@ -106,6 +105,7 @@ class LSTMCellModel(nn.Module):
         # out.size() --> batch_size, output_size
         return out
 
+
 # ██████  ███    ██ ███    ██ 
 # ██   ██ ████   ██ ████   ██ 
 # ██████  ██ ██  ██ ██ ██  ██ 
@@ -145,6 +145,7 @@ class RNNModel(nn.Module):
         # out.size() --> 100, 10
         return out
 
+
 #  ██████ ███    ██ ███    ██ 
 # ██      ████   ██ ████   ██ 
 # ██      ██ ██  ██ ██ ██  ██ 
@@ -173,6 +174,9 @@ class CNNModel(nn.Module):
         self.fc1 = nn.Linear(32 * 4 * 4, 10)
 
     def forward(self, x):
+        # Get dimensions of input
+        batch_size = x.size(0)
+
         # Convolution 1
         out = self.cnn1(x)
         out = self.relu1(out)
@@ -188,12 +192,13 @@ class CNNModel(nn.Module):
         out = self.maxpool2(out)
 
         # Resize
-        out = out.view(out.size(0), -1)
+        out = out.view(batch_size, -1)
 
         # Linear function (readout)
         out = self.fc1(out)
 
         return out
+
 
 # ██      ███████ ███    ██ ███████ ████████ 
 # ██      ██      ████   ██ ██         ██    
@@ -231,6 +236,7 @@ class LENETModel(nn.Module):
         for s in size:
             num_features *= s
         return num_features
+
 
 #  ██████ ██████  ███    ██ ███    ██ 
 # ██      ██   ██ ████   ██ ████   ██ 
@@ -271,32 +277,41 @@ class CRNNModel(nn.Module):
         self.fc = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        # Convolution 1
-        out = self.cnn1(x)
-        out = self.relu1(out)
+        # x = [batch_size, seq_len, x_dim, y_dim]
+        
+        # Get dimensions of input
+        batch_size = x.size(0)
+        seq_len = x.size(1)
 
-        # Max pool 1
-        out = self.maxpool1(out)
+        # Loop through the entire sequence
+        for i in range(seq_len):
+            out = x[:, i, : , :]
+           
+            # Fix out to have the in channels 1 (batch_size, in_channels, x_dim, y_dim)
+            out = out.view(batch_size, 1, 28, 28)
 
-        # Convolution 2 
-        out = self.cnn2(out)
-        out = self.relu2(out)
+            # Convolution 1
+            out = self.cnn1(out)
+            out = self.relu1(out)
 
-        # Max pool 2 
-        out = self.maxpool2(out)
+            # Max pool 1
+            out = self.maxpool1(out)
 
-        # Resize
-        # Original size: (100, 32, 4, 4)
-        print(out.size())
-        # out.size(0): 100
-        # New out size: (10, 10, 32*4*4)
-        out = out.view(10, 10, -1)
-        print(out.size())
+            # Convolution 2 
+            out = self.cnn2(out)
+            out = self.relu2(out)
 
-        h0 = torch.zeros(self.layer_dim, out.size(0), self.hidden_dim).requires_grad_().to(device)
+            # Max pool 2 
+            out = self.maxpool2(out)
+
+            # Resize
+            # Original size: (100, 32, 4, 4)
+            print(out.size())
+
+        h0 = torch.zeros(self.layer_dim, batch_size, self.hidden_dim).requires_grad_().to(device)
 
         # Initialize cell state
-        c0 = torch.zeros(self.layer_dim, out.size(0), self.hidden_dim).requires_grad_().to(device)
+        c0 = torch.zeros(self.layer_dim, batch_size, self.hidden_dim).requires_grad_().to(device)
 
         # One time step
         out, (_, _) = self.lstm(out, (h0.detach(), c0.detach()))
@@ -307,14 +322,6 @@ class CRNNModel(nn.Module):
         out = self.fc(out[:, -1, :]) 
         # out.size() --> 100, 10
         return out
-
-
-# ███████ ███████ ██████        ██    ██  ██████  
-# ██      ██      ██   ██       ██    ██ ██    ██ 
-# █████   ███████ ██████  █████ ██    ██ ██    ██ 
-# ██           ██ ██             ██  ██  ██    ██ 
-# ███████ ███████ ██              ████    ██████ 
-
 
 
 #  ██████   █████  ███    ██ 
