@@ -234,7 +234,7 @@ class CNN1Model(nn.Module):
         # Max pool 1
         out = self.maxpool1(out)
 
-        return out, batch_size
+        return out
 
 class CNN2Model(nn.Module):
     def __init__(self):
@@ -250,7 +250,10 @@ class CNN2Model(nn.Module):
         # Fully connected 1 (readout)
         self.fc1 = nn.Linear(32 * 4 * 4, 10)
 
-    def forward(self, x, batch_size=1):
+    def forward(self, x):
+        # Get dimensions of input
+        batch_size = x.size(0)
+
         # Convolution 2
         out = self.cnn2(x)
         out = self.relu2(out)

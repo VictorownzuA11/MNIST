@@ -135,9 +135,7 @@ if __name__ == "__main__":
             netsummary(model, (seq_dim, input_dim), device="cuda")
         else:
             netsummary(model1, (seq_dim, input_dim), device="cuda")
-            # FIXME: Need to fix summary of model2
-            print("Summary is broken for second Model")
-            #netsummary(model2, model2_input, device="cuda")
+            netsummary(model2, model2_input, device="cuda")
 
     '''
     STEP 2: LOADING DATASET
@@ -242,8 +240,8 @@ if __name__ == "__main__":
             if single_model:
                 outputs = model(images)
             else:
-                outputs, batchSize = model1(images)
-                outputs = model2(outputs, batchSize)
+                outputs = model1(images)
+                outputs = model2(outputs)
 
             # Calculate Loss: softmax --> cross entropy loss
             loss = criterion(outputs, labels)
@@ -287,8 +285,8 @@ if __name__ == "__main__":
                     if single_model:
                         outputs = model(images)
                     else:
-                        outputs, batchSize = model1(images)
-                        outputs = model2(outputs, batchSize)
+                        outputs = model1(images)
+                        outputs = model2(outputs)
 
                     # Get predictions from the maximum value
                     _, predicted = torch.max(outputs.data, 1)
