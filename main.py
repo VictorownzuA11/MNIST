@@ -8,8 +8,6 @@ import numpy as np
 # PyTorch
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
-import torchvision.datasets as dsets
 from torchsummary import summary as netsummary
 
 # Networks
@@ -75,7 +73,6 @@ if __name__ == "__main__":
     # Number of steps to unroll
     seq_dim = 28
     seq_len = 1
-    use_seq = 1
 
     modelname = args.model
     learning_rate = args.lr
@@ -86,6 +83,8 @@ if __name__ == "__main__":
         wait_time = 0
     else:
         wait_time = 1
+
+    single_model = True
 
     print("\n==========================================================================================")
     print(f"Loading model {modelname}".center(90))
@@ -106,14 +105,17 @@ if __name__ == "__main__":
     elif (modelname == "rnn"):
         model = RNNModel(input_dim, hidden_dim, layer_dim, output_dim)
     elif (modelname == "cnn"):
-        use_seq = 0
         model = CNNModel()
+    elif (modelname == "cnn2"):
+        model1 = CNN1Model()
+        model2 = CNN2Model()
+
+        single_model = False
+        model2_input = [16, 12, 12]
     elif (modelname == "lenet"):
-        use_seq = 0
         model = LENETModel()
     elif (modelname == "crnn"):
         seq_len = args.seq_len
-        use_seq = 0
         model = CRNNModel(input_dim, hidden_dim, layer_dim, output_dim)
     #elif (modelname == "gan"):
         #model = GANModel()
@@ -121,15 +123,21 @@ if __name__ == "__main__":
         exit("Invalid Model")
 
     # Move model to device
-    model.to(args.device)
+    if single_model:
+        model.to(args.device)
+    else:
+        model1.to(args.device)
+        model2.to(args.device)
 
     # Print a Summary of the model
     if args.summary:
-        if use_seq:
+        if single_model:
             netsummary(model, (seq_dim, input_dim), device="cuda")
         else:
-            netsummary(model, (1, seq_dim, input_dim), device="cuda")
-
+            netsummary(model1, (seq_dim, input_dim), device="cuda")
+            # FIXME: Need to fix summary of model2
+            print("Summary is broken for second Model")
+            #netsummary(model2, model2_input, device="cuda")
 
     '''
     STEP 2: LOADING DATASET
@@ -192,7 +200,11 @@ if __name__ == "__main__":
     '''
     STEP 5: INSTANTIATE OPTIMIZER CLASS
     '''
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    if single_model:
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    else:
+        optimizer1 = torch.optim.SGD(model1.parameters(), lr=learning_rate)
+        optimizer2 = torch.optim.SGD(model2.parameters(), lr=learning_rate)
 
 
     '''
@@ -213,22 +225,25 @@ if __name__ == "__main__":
                 cv2.waitKey(wait_time)
 
             # Load images as Variable
-            if use_seq:
-                # (batch_size, seq_dim, input_dim)
-                images = images.view(-1, img_dim_x, img_dim_y).requires_grad_().to(device)
-            else:
-                # (batch_size, 1, seq_dim, input_dim)
-                images = images.requires_grad_().to(device)
+            images = images.requires_grad_().to(device)
 
             # Reformat the labels from [batch_size, seq_len] to batch_size*seq_len]
             labels = labels.view(-1).to(device)
 
             # Clear gradients w.r.t. parameters
-            optimizer.zero_grad()
+            if single_model:
+                optimizer.zero_grad()
+            else:
+                optimizer1.zero_grad()
+                optimizer2.zero_grad()
 
             # Forward pass to get output/logits
             # outputs.size() --> 100, 10
-            outputs = model(images)
+            if single_model:
+                outputs = model(images)
+            else:
+                outputs, batchSize = model1(images)
+                outputs = model2(outputs, batchSize)
 
             # Calculate Loss: softmax --> cross entropy loss
             loss = criterion(outputs, labels)
@@ -237,7 +252,11 @@ if __name__ == "__main__":
             loss.backward()
 
             # Updating parameters
-            optimizer.step()
+            if single_model:
+                optimizer.step()
+            else:
+                optimizer1.step()
+                optimizer2.step()
 
             # Test the model halfway, and at the end of the batch
             if (batch+1) % (len(train_loader)//2) == 0:
@@ -258,17 +277,18 @@ if __name__ == "__main__":
                         cv2.imshow("Test Batch", imgview)
                         cv2.waitKey(wait_time)
 
-                    # Format the images to the model input parameters
-                    if use_seq:
-                        images = images.view(-1, img_dim_x, img_dim_y).to(device)
-                    else:
-                        images = images.to(device)
+                    # Move images to device
+                    images = images.to(device)
                     
                     # Reformat the labels from [batch_size, seq_len] to batch_size*seq_len]
                     labels = labels.view(-1).to(device)
 
                     # Forward pass only to get logits/output
-                    outputs = model(images)
+                    if single_model:
+                        outputs = model(images)
+                    else:
+                        outputs, batchSize = model1(images)
+                        outputs = model2(outputs, batchSize)
 
                     # Get predictions from the maximum value
                     _, predicted = torch.max(outputs.data, 1)
